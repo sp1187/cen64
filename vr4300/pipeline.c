@@ -219,6 +219,12 @@ static int vr4300_dc_stage(struct vr4300 *vr4300) {
     return 1;
   }
 
+  // Check if the instruction trapped
+  if (unlikely(exdc_latch->common.fault == VR4300_FAULT_TRAP)) {
+    VR4300_TRAP(vr4300);
+    return 1;
+  }
+
   // Check if we should raise an interrupt (and effectively kill this insn).
   if (unlikely(cp0_cause & cp0_status & 0xFF00 &&
     (((cp0_status ^ 6) & 0x7) == 0x7))) {

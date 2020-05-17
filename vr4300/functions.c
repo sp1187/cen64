@@ -406,6 +406,15 @@ int VR4300_BGTZ_BGTZL_BLEZ_BLEZL(
 }
 
 //
+// BREAK
+//
+int VR4300_BREAK(struct vr4300 *vr4300,
+  uint32_t unused(iw), uint64_t unused(rs), uint64_t unused(rt)) {
+  VR4300_BRPT(vr4300);
+  return 1;
+}
+
+//
 // CACHE
 //
 cen64_cold static int vr4300_cacheop_unimplemented(
@@ -1479,6 +1488,125 @@ int VR4300_SYSCALL(struct vr4300 *vr4300,
   VR4300_SYSC(vr4300);
   return 1;
 }
+
+//
+// TEQ
+// TNE
+//
+int VR4300_TEQ_TNE(struct vr4300 *vr4300,
+  uint32_t iw, uint64_t rs, uint64_t rt) {
+  struct vr4300_exdc_latch *exdc_latch = &vr4300->pipeline.exdc_latch;
+
+  bool is_ne = iw >> 1 & 0x1;
+  bool cmp = rs == rt;
+
+  if (cmp == is_ne) {
+    return 0;
+  }
+
+  exdc_latch->common.fault = VR4300_FAULT_TRAP;
+  return 1;
+}
+
+//
+// TEQI
+// TNEI
+//
+int VR4300_TEQI_TNEI(struct vr4300 *vr4300,
+  uint32_t iw, uint64_t rs, uint64_t rt) {
+  struct vr4300_exdc_latch *exdc_latch = &vr4300->pipeline.exdc_latch;
+
+  uint64_t imm = (int16_t) iw;
+  bool is_ne = iw >> 17 & 0x1;
+  bool cmp = rs == imm;
+
+  if (cmp == is_ne) {
+    return 0;
+  }
+
+  exdc_latch->common.fault = VR4300_FAULT_TRAP;
+  return 1;
+}
+
+//
+// TGE
+// TLT
+//
+int VR4300_TGE_TLT(struct vr4300 *vr4300,
+  uint32_t iw, uint64_t rs, uint64_t rt) {
+  struct vr4300_exdc_latch *exdc_latch = &vr4300->pipeline.exdc_latch;
+
+  bool is_lt = iw >> 1 & 0x1;
+  bool cmp = (int64_t) rs >= (int64_t)rt;
+
+  if (cmp == is_lt) {
+    return 0;
+  }
+
+  exdc_latch->common.fault = VR4300_FAULT_TRAP;
+  return 1;
+}
+
+//
+// TGEI
+// TLTI
+//
+int VR4300_TGEI_TLTI(struct vr4300 *vr4300,
+  uint32_t iw, uint64_t rs, uint64_t rt) {
+  struct vr4300_exdc_latch *exdc_latch = &vr4300->pipeline.exdc_latch;
+
+  int64_t imm = (int16_t) iw;
+  bool is_lt = iw >> 17 & 0x1;
+  bool cmp = (int64_t) rs >= imm;
+
+  if (cmp == is_lt) {
+    return 0;
+  }
+
+  exdc_latch->common.fault = VR4300_FAULT_TRAP;
+  return 1;
+}
+
+//
+// TGEIU
+// TLTIU
+//
+int VR4300_TGEIU_TLTIU(struct vr4300 *vr4300,
+  uint32_t iw, uint64_t rs, uint64_t rt) {
+  struct vr4300_exdc_latch *exdc_latch = &vr4300->pipeline.exdc_latch;
+
+  uint64_t imm = (uint16_t) iw;
+  bool is_lt = iw >> 17 & 0x1;
+  bool cmp = rs >= imm;
+
+  if (cmp == is_lt) {
+    return 0;
+  }
+
+  exdc_latch->common.fault = VR4300_FAULT_TRAP;
+  return 1;
+}
+
+//
+// TGEU
+// TLTU
+//
+int VR4300_TGEU_TLTU(struct vr4300 *vr4300,
+  uint32_t iw, uint64_t rs, uint64_t rt) {
+  struct vr4300_exdc_latch *exdc_latch = &vr4300->pipeline.exdc_latch;
+
+  bool is_lt = iw >> 1 & 0x1;
+  bool cmp = rs >= rt;
+
+  if (cmp == is_lt) {
+    return 0;
+  }
+
+  exdc_latch->common.fault = VR4300_FAULT_TRAP;
+  return 1;
+}
+
+
 
 // Function lookup table.
 cen64_align(const vr4300_function
